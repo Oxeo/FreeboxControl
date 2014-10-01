@@ -5,13 +5,13 @@ from hashlib import sha1
 import time
 from exceptions import NetworkError
 from exceptions import FreeboxError
-from exceptions import FreeboxWarning
+from exceptions import AppTokenError
 
 
 class FreeboxCtrl:
     def __init__(self, app_id, target='mafreebox.freebox.fr'):
+        self.appToken = ''
         self.__appId = app_id
-        self.__appToken = ''
         self.__sessionToken = ''
         self.__connection = httplib.HTTPConnection(target)
 
@@ -26,47 +26,31 @@ class FreeboxCtrl:
             status = self.__get_app_token_status(data['result']['track_id'])
             time.sleep(1)
         FreeboxCtrl.__check_app_token_status(status)
-        self.__appToken = data['result']['app_token']
-        return self.__appToken
-
-    def set_token(self, app_token):
-        self.__appToken = app_token
+        self.appToken = data['result']['app_token']
+        return self.appToken
 
     def is_freebox_player_on(self):
-        if self.__sessionToken == '':
-            self.__start_session()
-        data = self.__get_json_request('/api/v3/airmedia/receivers')
-        if data['success']:
-            for elt in data['result']:
-                if elt['name'] == 'Freebox Player':
-                    return elt['capabilities']['video']
-            return False
-        elif data['error_code'] == 'auth_required':
-            self.__sessionToken = ''
-            raise FreeboxWarning(FreeboxWarning.authRequired)
-        else:
-            raise FreeboxError(data['error_code'] + ': ' + (data['msg']))
+        data = self.__authenticated_request('/api/v3/airmedia/receivers')
+        for elt in data['result']:
+            if elt['name'] == 'Freebox Player':
+                return elt['capabilities']['video']
+        return False
 
     def play(self, media_type, media):
-        if self.__sessionToken == '':
-            self.__start_session()
         body = json.dumps({'action': 'start', 'media_type': media_type,
                            'media': media, 'password': ''})
-        data = self.__put_json_request('/api/v3/airmedia/receivers/Freebox%20Player/', body)
-        return data
-
-    @staticmethod
-    def __gen_password(app_token, challenge):
-        h = hmac.new(str(app_token), str(challenge), sha1)
-        return h.hexdigest()
+        self.__authenticated_request('/api/v3/airmedia/receivers/Freebox%20Player/', body)
 
     def __start_session(self):
-        if self.__appToken == '':
-            raise FreeboxError(FreeboxError.appTokenUnknown)
-        password = FreeboxCtrl.__gen_password(self.__appToken, self.__get_challenge())
+        self.__sessionToken = ''
+        if self.appToken == '':
+            raise AppTokenError(AppTokenError.appTokenUnknown)
+        password = FreeboxCtrl.__gen_password(self.appToken, self.__get_challenge())
         body = json.dumps({'app_id': self.__appId, 'password': password})
         data = self.__put_json_request('/api/v3/login/session/', body)
         if not data['success']:
+            if data['error_code'] == 'invalid_token':
+                raise AppTokenError(AppTokenError.appTokenUnknown)
             raise FreeboxError(data['error_code'] + ': ' + (data['msg']))
         self.__sessionToken = data['result']['session_token']
 
@@ -82,14 +66,22 @@ class FreeboxCtrl:
             raise FreeboxError(data['error_code'] + ': ' + (data['msg']))
         return data['result']['status']
 
-    @staticmethod
-    def __check_app_token_status(status):
-        if status == 'unknown':
-            raise FreeboxError(FreeboxError.appTokenUnknown)
-        elif status == 'timeout':
-            raise FreeboxError(FreeboxError.appTokenTimeout)
-        elif status == 'denied':
-            raise FreeboxError(FreeboxError.appTokenDenied)
+    def __authenticated_request(self, url, body=''):
+        if self.__sessionToken == '':
+            self.__start_session()
+        if body != '':
+            data = self.__put_json_request(url, body)
+        else:
+            data = self.__get_json_request(url)
+        if not data['success'] and data['error_code'] == 'auth_required':
+            self.__start_session()
+            if body != '':
+                data = self.__put_json_request(url, body)
+            else:
+                data = self.__get_json_request(url)
+        if not data['success']:
+            raise FreeboxError(data['error_code'] + ': ' + (data['msg']))
+        return data
 
     def __get_json_request(self, url):
         try:
@@ -114,3 +106,17 @@ class FreeboxCtrl:
             self.__connection.close()
             raise NetworkError("Freebox server is not reachable: " + e.message)
         return json.load(response)
+
+    @staticmethod
+    def __gen_password(app_token, challenge):
+        h = hmac.new(str(app_token), str(challenge), sha1)
+        return h.hexdigest()
+
+    @staticmethod
+    def __check_app_token_status(status):
+        if status == 'unknown':
+            raise AppTokenError(AppTokenError.appTokenUnknown)
+        elif status == 'timeout':
+            raise AppTokenError(AppTokenError.appTokenTimeout)
+        elif status == 'denied':
+            raise AppTokenError(AppTokenError.appTokenDenied)
