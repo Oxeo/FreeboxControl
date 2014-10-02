@@ -29,7 +29,7 @@ app_token = myBox.register('My application name')
 Reference
 ---------
 
-### Get the Freebox Player status (switch on / off)
+### Get Freebox Player status (switch on / off)
 ```python
 from freeboxctrl import FreeboxCtrl
 
@@ -39,7 +39,7 @@ myBox.appToken = app_token
 status = myBox.is_freebox_player_on()
 ```
 
-### Play a video on the Freebox Player
+### Play video on Freebox Player
 ```python
 myBox.play('video', 'http://anon.nasa-global.edgesuite.net/HD_downloads/GRAIL_launch_480.mov')
 ```
