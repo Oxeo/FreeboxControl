@@ -39,7 +39,7 @@ myBox.appToken = app_token
 status = myBox.is_freebox_player_on()
 ```
 
-### Get files list on Freebox internal disk and disks connected to the Freebox
+### Get files list on Freebox disks
 ```python
 files = myBox.get_files_list('Disque dur/Vidéos')
 for file in files:
