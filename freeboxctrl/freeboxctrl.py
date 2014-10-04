@@ -3,6 +3,7 @@ import json
 import hmac
 from hashlib import sha1
 import time
+import base64
 from exceptions import NetworkError
 from exceptions import FreeboxError
 from exceptions import AppTokenError
@@ -35,6 +36,10 @@ class FreeboxCtrl:
             if elt['name'] == 'Freebox Player':
                 return elt['capabilities']['video']
         return False
+
+    def get_files_list(self, folder='/Disque dur/'):
+        data = self.__authenticated_request('/api/v3/fs/ls/' + base64.b64encode(folder))
+        return data['result']
 
     def play(self, media_type, media):
         body = json.dumps({'action': 'start', 'media_type': media_type,

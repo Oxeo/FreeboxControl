@@ -1,7 +1,7 @@
 FreeboxControl
 ==============
 
-Control your Freebox with Python (used Freebox API v3.0)
+Control your Freebox with Python (thanks to Freebox API v3.0)
 
 
 Install
@@ -37,6 +37,13 @@ myBox = FreeboxCtrl('test.id')
 myBox.appToken = app_token
 
 status = myBox.is_freebox_player_on()
+```
+
+### Get files list on Freebox internal disk and disks connected to the Freebox
+```python
+files = myBox.get_files_list('Disque dur/Vidéos')
+for file in files:
+    print file['name'] + ' (path = ' + file['path'] + ')'
 ```
 
 ### Play video on Freebox Player

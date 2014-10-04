@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 import sys
 import time
 sys.path.append('..')
@@ -6,7 +7,7 @@ from freeboxctrl import FreeboxCtrl
 from freeboxctrl import NetworkError
 from freeboxctrl import AppTokenError
 
-ctrl = FreeboxCtrl('test.id', 'mafreebox.freebox.fr')
+myBox = FreeboxCtrl('test.id', 'mafreebox.freebox.fr')
 
 try:
     with open('app_token.txt', 'r') as f:
@@ -15,19 +16,26 @@ except:
     appToken = ''
 
 if appToken == '':
-    # Enable application access with the Freebox front panel
-    token = ctrl.register('My application name', 'My device', 'v0.1')
+    print 'Enable application access with the Freebox front panel'
+    token = myBox.register('My application name', 'My device', 'v0.1')
     # Save token
     with open('app_token.txt', 'w') as f:
         f.write(token)
 else:
-    ctrl.appToken = appToken
+    myBox.appToken = appToken
 
+# Display files list
+files = myBox.get_files_list('Disque dur/Vidéos')
+for file in files:
+    print file['name'] + ' (path = ' + file['path'] + ')'
+
+# Play video
 #ctrl.play('video', 'http://anon.nasa-global.edgesuite.net/HD_downloads/GRAIL_launch_480.mov')
 
+# Check Freebox Player status (on / off)
 while True:
     try:
-        status = ctrl.is_freebox_player_on()
+        status = myBox.is_freebox_player_on()
         print status
         time.sleep(1)
     except NetworkError:
