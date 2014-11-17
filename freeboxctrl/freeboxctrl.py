@@ -64,6 +64,18 @@ class FreeboxCtrl:
         body = json.dumps({'action': 'start', 'media_type': media_type,
                            'media': media, 'password': ''})
         self.__authenticated_request('/api/v3/airmedia/receivers/Freebox%20Player/', body)
+        
+    def configuration_connection_status(self):
+        data = self.__authenticated_request('/api/v3/connection/')
+        return data['result']
+
+    def configuration_lan_browser_interfaces(self):
+        data = self.__authenticated_request('/api/v3/lan/browser/interfaces/')
+        return data['result']
+
+    def configuration_lan_browser(self, interface):
+        data = self.__authenticated_request('/api/v3/lan/browser/' + interface + '/')
+        return data['result']
 
     def __start_session(self):
         self.__sessionToken = ''
