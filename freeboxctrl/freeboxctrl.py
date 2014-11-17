@@ -4,9 +4,9 @@ import hmac
 from hashlib import sha1
 import time
 import base64
-from exceptions import NetworkError
-from exceptions import FreeboxError
-from exceptions import AppTokenError
+from freeboxexceptions import NetworkError
+from freeboxexceptions import FreeboxError
+from freeboxexceptions import AppTokenError
 
 
 class FreeboxCtrl:
