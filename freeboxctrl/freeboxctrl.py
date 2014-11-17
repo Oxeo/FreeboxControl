@@ -20,7 +20,7 @@ class FreeboxCtrl:
     def register(self, app_name, device_name='FreeboxCtrl', app_version='1.0'):
         body = json.dumps({'app_id': self.__appId, 'app_name': app_name,
                            'app_version': app_version, 'device_name': device_name})
-        data = self.__put_json_request('/api/v3/login/authorize/', body)
+        data = self.__json_request('/api/v3/login/authorize/', body)
         if not data['success']:
             raise FreeboxError(data['error_code'] + ': ' + (data['msg']))
         status = 'pending'
@@ -83,7 +83,7 @@ class FreeboxCtrl:
             raise AppTokenError(AppTokenError.appTokenUnknown)
         password = FreeboxCtrl.__gen_password(self.appToken, self.__get_challenge())
         body = json.dumps({'app_id': self.__appId, 'password': password})
-        data = self.__put_json_request('/api/v3/login/session/', body)
+        data = self.__json_request('/api/v3/login/session/', body)
         if not data['success']:
             if data['error_code'] == 'invalid_token':
                 raise AppTokenError(AppTokenError.appTokenUnknown)
@@ -91,52 +91,39 @@ class FreeboxCtrl:
         self.__sessionToken = data['result']['session_token']
 
     def __get_challenge(self):
-        data = self.__get_json_request('/api/v3/login/')
+        data = self.__json_request('/api/v3/login/')
         if not data['success']:
             raise FreeboxError(data['error_code'] + ': ' + (data['msg']))
         return data['result']['challenge']
 
     def __get_app_token_status(self, track_id):
-        data = self.__get_json_request('/api/v3/login/authorize/' + str(track_id))
+        data = self.__json_request('/api/v3/login/authorize/' + str(track_id))
         if not data['success']:
             raise FreeboxError(data['error_code'] + ': ' + (data['msg']))
         return data['result']['status']
 
-    def __authenticated_request(self, url, body=''):
+    def __authenticated_request(self, url, body = None, type = None):
         if self.__sessionToken == '':
             self.__start_session()
-        if body != '':
-            data = self.__put_json_request(url, body)
-        else:
-            data = self.__get_json_request(url)
+        data = self.__json_request(url, body, type)
         if not data['success'] and data['error_code'] == 'auth_required':
             self.__start_session()
-            if body != '':
-                data = self.__put_json_request(url, body)
-            else:
-                data = self.__get_json_request(url)
+            data = self.__json_request(url)
         if not data['success']:
             raise FreeboxError(data['error_code'] + ': ' + (data['msg']))
         return data
-
-    def __get_json_request(self, url):
-        try:
-            self.__connection.putrequest("GET", url)
-            self.__connection.putheader('Accept', 'text/plain')
-            self.__connection.putheader('X-Fbx-App-Auth', self.__sessionToken)
-            self.__connection.endheaders()
-            response = self.__connection.getresponse()
-        except Exception, e:
-            self.__connection.close()
-            raise NetworkError("Freebox server is not reachable: " + e.message)
-        return json.load(response)
-
-    def __put_json_request(self, url, body):
+    
+    def __json_request(self, url, body = None, type = None):
         headers = {'Content-type': 'application/json',
                    'charset': 'utf-8', 'Accept': 'text/plain',
                    'X-Fbx-App-Auth': self.__sessionToken}
         try:
-            self.__connection.request('POST', url, body, headers)
+            if type is None:
+                if body is None:
+                    type = 'GET'
+                else:
+                    type = "POST"
+            self.__connection.request(type, url, body, headers)
             response = self.__connection.getresponse()
         except Exception, e:
             self.__connection.close()
