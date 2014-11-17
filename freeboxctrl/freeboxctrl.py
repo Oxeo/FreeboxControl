@@ -76,6 +76,22 @@ class FreeboxCtrl:
     def configuration_lan_browser(self, interface):
         data = self.__authenticated_request('/api/v3/lan/browser/' + interface + '/')
         return data['result']
+    
+    def parental_filter_config(self):
+        data = self.__authenticated_request('/api/v3/parental/config/')
+        return data['result']
+    
+    def parental_filters(self):
+        data = self.__authenticated_request('/api/v3/parental/filter/')
+        return data['result']
+    
+    def parental_filter_get(self, id):
+        data = self.__authenticated_request('/api/v3/parental/filter/' + str(id))
+        return data['result']
+        
+    def parental_filter_delete(self, id):
+        data = self.__authenticated_request('/api/v3/parental/filter/' + str(id))
+        return data['result']
 
     def __start_session(self):
         self.__sessionToken = ''
