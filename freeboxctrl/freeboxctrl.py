@@ -7,6 +7,7 @@ import base64
 from freeboxexceptions import NetworkError
 from freeboxexceptions import FreeboxError
 from freeboxexceptions import AppTokenError
+import os
 
 
 class FreeboxCtrl:
@@ -29,6 +30,24 @@ class FreeboxCtrl:
         FreeboxCtrl.__check_app_token_status(status)
         self.appToken = data['result']['app_token']
         return self.appToken
+    
+    def default_token_location(self):
+        return os.path.normpath(os.path.expanduser("~/.FreeboxCtrl_" + self.__appId))
+        
+    def load_token(self, location = None):
+        if location is None:
+            location = self.default_token_location()
+        with open(location, 'r') as file:
+            self.appToken = file.read()
+        
+    def save_token(self, location = None):
+        if location is None:
+            location = self.default_token_location()
+        with open(location, 'w') as file:
+            file.write(self.appToken)
+    
+    def set_token(self, token):
+        self.appToken = token
 
     def is_freebox_player_on(self):
         data = self.__authenticated_request('/api/v3/airmedia/receivers')
