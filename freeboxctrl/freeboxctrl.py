@@ -34,17 +34,23 @@ class FreeboxCtrl:
     def default_token_location(self):
         return os.path.normpath(os.path.expanduser("~/.FreeboxCtrl_" + self.__appId))
         
-    def load_token(self, location = None):
+    def load_token(self, location=None):
         if location is None:
             location = self.default_token_location()
         with open(location, 'r') as file:
             self.appToken = file.read()
         
-    def save_token(self, location = None):
+    def save_token(self, location=None):
         if location is None:
             location = self.default_token_location()
         with open(location, 'w') as file:
             file.write(self.appToken)
+
+    def remove_token(self, location=None):
+        if location is None:
+            location = self.default_token_location()
+        os.remove(location)
+        self.appToken = ''
     
     def set_token(self, token):
         self.appToken = token

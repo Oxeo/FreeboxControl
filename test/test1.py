@@ -10,24 +10,20 @@ from freeboxctrl import AppTokenError
 myBox = FreeboxCtrl('test.id', 'mafreebox.freebox.fr')
 
 try:
-    with open('app_token.txt', 'r') as f:
-        appToken = f.read()
+    myBox.load_token()
 except:
-    appToken = ''
-
-if appToken == '':
     print 'Enable application access with the Freebox front panel'
-    token = myBox.register('My application name', 'My device', 'v0.1')
-    # Save token
-    with open('app_token.txt', 'w') as f:
-        f.write(token)
-else:
-    myBox.appToken = appToken
+    myBox.register('My application name', 'My device', 'v0.1')
+    myBox.save_token()
 
 # Display files list
-files = myBox.get_files_list('Disque dur/Vidéos')
-for file in files:
-    print file['name'] + ' (path = ' + file['path'] + ')'
+try:
+    files = myBox.get_files_list('Disque dur/Vidéos')
+    for file in files:
+        print file['name'] + ' (path = ' + file['path'] + ')'
+except AppTokenError:
+    myBox.remove_token()
+    print "invalid token removed"
 
 # Play video
 #ctrl.play('video', 'http://anon.nasa-global.edgesuite.net/HD_downloads/GRAIL_launch_480.mov')
@@ -40,8 +36,3 @@ while True:
         time.sleep(1)
     except NetworkError:
         time.sleep(30)
-    except AppTokenError, e:
-        print e
-        with open('app_token.txt', 'w') as f:
-            f.write('')
-        exit(0)
