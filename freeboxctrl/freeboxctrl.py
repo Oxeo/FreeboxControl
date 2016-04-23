@@ -66,6 +66,10 @@ class FreeboxCtrl:
         data = self.__authenticated_request('/api/v3/fs/ls/' + base64.b64encode(folder))
         return data['result']
 
+    def stop(self, media_type):
+        body = json.dumps({'action': 'stop', 'media_type': media_type})
+        self.__authenticated_request('/api/v3/airmedia/receivers/Freebox%20Player/', body)
+
     def play(self, media_type, media):
         body = json.dumps({'action': 'start', 'media_type': media_type,
                            'media': media, 'password': ''})
